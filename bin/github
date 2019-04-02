@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/github.rb'
+
+token = `pass personal/github.com/oauth`.strip
+
+gh = GitHub.new(token)
+
+case ARGV[0]
+when "ls"
+  gh.user_repos("hugopeixoto").each { |r| puts "#{r["fork"]} #{r["full_name"]}" }
+when "merged"
+  gh.merged_pull_requests.each { |r| puts r["html_url"] }
+end

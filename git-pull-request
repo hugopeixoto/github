@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -e
+
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+SUBJECT="$(git log --format="%s" -n 1 HEAD)"
+BASE="master"
+
+REPO="$(git remote get-url origin | sed -ne 's/git@github.com:\(.*\).git/\1/p')"
+
+if [ -z "$REPO" ]; then
+  echo "git-pull-request: not a github repository" >&2
+fi
+
+PAYLOAD="$(jq -n \
+  --arg title "$SUBJECT" \
+  --arg head "$BRANCH" \
+  --arg base "$BASE" \
+  '{"title": $title, "head": $head, "base": $base}')"
+
+OAUTH_TOKEN="$(pass personal/github.com/oauth)"
+
+curl "https://api.github.com/repos/${REPO}/pulls" \
+  -H "Authorization: token ${OAUTH_TOKEN}" \
+  -H 'Accept: application/vnd.github.v3+json' \
+  -X POST \
+  -d "$PAYLOAD"
